@@ -3,12 +3,12 @@
 A deep learning based approach to predict Antibiotic Resistance Genes (ARGs) from metagenomes. It provides two models,deepARG-SS and deepARG-LS.
 
 ## Latest Release 
-* updated on October 11 - 2020
+* updated on Nov 10 - 2023
 * deeparg 1.0.2: Added to pip
 * Fastq input - short reads pipeline fixed
 
-## Web Service
-We have released a web service to process raw sequences (paired end) using deepARG. You will get absolute and relative abundances of each submitted sample. You can find the website at http://bench.cs.vt.edu/deeparg
+<!-- ## Web Service
+We have released a web service to process raw sequences (paired end) using deepARG. You will get absolute and relative abundances of each submitted sample. You can find the website at http://bench.cs.vt.edu/deeparg -->
 
 #### DeepARG output
 DeepARG generates two files: *.ARG that contains the sequences with a probability >= --prob (0.8 default) and *.potential.ARG with sequences containing a probability < --prob (0.8 default). The *.potential.ARG file can still contain ARG-like sequences, howevere, it is necessary inspect its sequences.
@@ -224,7 +224,7 @@ Arango-Argoty GA, Garner E, Pruden A, Heath LS, Vikesland P, Zhang L. DeepARG: A
 https://doi.org/10.1186/s40168-018-0401-z.
 
 ## Database
-Details about the database mining can be found at http://bench.cs.vt.edu/ftp/deeparg/scripts/ instructions are placed in the python notebook called main.ipynb
+Database is hosted in Zenodo: https://zenodo.org/records/8280582
 
 ## Contact
 If need any asistance please contact: gustavo1@vt.edu
