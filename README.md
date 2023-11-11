@@ -68,17 +68,25 @@ To re-activate the virtual environment:
 ### Use conda environment
 Create a virtual environment with conda:
 
-    1. conda create -n deeparg_env python=2.7.18
-    2. source activate deeparg_env
+    conda create -n deeparg_env python=2.7.18
+    source activate deeparg_env
 
 Install diamond with conda (inside virtual environment): 
 
     conda install -c bioconda diamond==0.9.24
 
+Optional (used for short reads pipeline): 
+
+    conda install -c bioconda trimmomatic
+    conda install -c bioconda vsearch
+    conda install -c bioconda bedtools
+    conda install -c bioconda bowtie2
+    conda install -c bioconda samtools
+
 Install deeparg with pip and download the data required by deeparg
 
-    1. pip install git+https://github.com/gaarangoa/deeparg.git
-    2. deeparg download_data -o /path/to/local/directory/
+    pip install git+https://github.com/gaarangoa/deeparg.git
+    deeparg download_data -o /path/to/local/directory/
 
 Activate virtual environment
 
@@ -88,8 +96,7 @@ Deactivate the virtual environment:
 
     conda deactivate
 
-
-### Known instalation issues
+<!-- ### Known instalation issues
 See issues on repository
 
 ### Docker
@@ -100,7 +107,7 @@ To run deeparg using docker just type:
 
     docker run --rm -v $PWD:/data/ gaarangoa/deeparg:latest deeparg --help
 
-Note that input parameters are under /data/ directory. 
+Note that input parameters are under /data/ directory.  -->
 
 ### Example:
 In this example, we will classify a set of ORFs from a set of assembled contigs. The fasta file contains gene sequences (nucleotides).
@@ -161,19 +168,7 @@ Input is a FASTA file:
     3) Annotate short sequence reads when the input is a protein FASTA file (unusual case):
         deeparg predict --model SS --type prot --input /path/file.fasta --out /path/to/out/file.out
 
-
-## License
-deepARG is under the MIT licence. However, please take a look at te comercial restrictions of the databases used during the mining process (CARD, ARDB, and UniProt).
-
 # Short reads pipeline
-
-## Requirements
-
-    conda install -c bioconda trimmomatic
-    conda install -c bioconda vsearch
-    conda install -c bioconda bedtools
-    conda install -c bioconda bowtie2
-    conda install -c bioconda samtools
 
 ## Usage
 
@@ -230,6 +225,9 @@ https://doi.org/10.1186/s40168-018-0401-z.
 
 ## Database
 Database is hosted in Zenodo: https://zenodo.org/records/8280582
+
+## License
+deepARG is under the MIT licence. However, please take a look at te comercial restrictions of the databases used during the mining process (CARD, ARDB, and UniProt).
 
 ## Contact
 If need any asistance please contact: gustavo1@vt.edu
