@@ -11,8 +11,8 @@ RUN apt-get --yes install wget
 # Install DeepARG 1.0.2
 RUN pip install deeparg==1.0.2
 
-# Download data
-RUN deeparg download_data -o ~/deeparg/
+# Download data (drepecated)
+# RUN deeparg download_data -o ~/deeparg/
 
 # Move diamond 
 RUN cp ~/deeparg/bin/diamond /bin/diamond

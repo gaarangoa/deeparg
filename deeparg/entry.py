@@ -6,6 +6,7 @@ import requests
 import os
 from tqdm import tqdm
 from deeparg.short_reads_pipeline.short_reads_pipeline import main as main_srp
+import zipfile
 
 import deeparg.predict.bin.deepARG as clf
 
@@ -72,43 +73,17 @@ def download_file(url, save_dir, type):
                 ofile.write(chunk)
 
 def download_data(args):
-    logger.info("Downloading data into {} Directory".format(args.output_path)) 
-    main_url = 'https://bench.cs.vt.edu/ftp/data/gustavo1/deeparg/'
+    logger.info("Checking downloaded data {} Directory".format(args.output_path)) 
+    main_url = 'https://zenodo.org/records/8280582/files/deeparg.zip'
     
-    # Downloading models
-    logger.info('Downloading Models')
-    for model_v in ['v1', 'v2']:
-        mkdir('{}/model/{}/'.format(args.output_path, model_v))
-        download_file( "{}/model/{}/metadata_LS.pkl".format(main_url, model_v), "{}/model/{}/metadata_LS.pkl".format(args.output_path, model_v), "wb")
-        download_file( "{}/model/{}/model_LS.pkl".format(main_url, model_v), "{}/model/{}/model_LS.pkl".format(args.output_path, model_v), "wb")
-        download_file( "{}/model/{}/metadata_SS.pkl".format(main_url, model_v), "{}/model/{}/metadata_SS.pkl".format(args.output_path, model_v), "wb")
-        download_file( "{}/model/{}/model_SS.pkl".format(main_url, model_v), "{}/model/{}/model_SS.pkl".format(args.output_path, model_v), "wb")
+    logger.info('Downloading Data from {}'.format(main_url))
+    mkdir('{}'.format(args.output_path))
+    download_file( "{}".format(main_url), "{}/deeparg.gz".format(args.output_path), "wb")
 
-    # Downloading ARGs database
-    logger.info('Downloading database files')
-    for model_v in ['v1', 'v2']:
-        mkdir('{}/database/{}/'.format(args.output_path, model_v))
-        download_file( "{}/database/{}/features.dmnd".format(main_url, model_v), "{}/database/{}/features.dmnd".format(args.output_path, model_v), "wb")
-        download_file( "{}/database/{}/features.fasta".format(main_url, model_v), "{}/database/{}/features.fasta".format(args.output_path, model_v), "w")
-        download_file( "{}/database/{}/features.gene.length".format(main_url, model_v), "{}/database/{}/features.gene.length".format(args.output_path, model_v), "w")
-    
-    # Download diamond
-    logger.info('Downloading diamond - only linux')
-    main_url = 'https://bench.cs.vt.edu/ftp/data/gustavo1/deeparg/'
-    mkdir('{}/bin/'.format(args.output_path))
-    download_file( "{}/bin/diamond".format(main_url, model_v), "{}/bin/diamond".format(args.output_path), "wb")
+    with zipfile.ZipFile("{}/deeparg.gz".format(args.output_path), 'r') as zip_ref:
+        zip_ref.extractall(args.output_path)
 
-    # Download bowtie greengenes data
-    logger.info('Downloading greengenes bowtie database')
-    main_url = 'https://bench.cs.vt.edu/ftp/data/deeparg/data/gg13/'
-    mkdir('{}/data/gg13/'.format(args.output_path))
-    download_file( "{}/dataset.1.bt2".format(main_url), "{}/data/gg13/dataset.1.bt2".format(args.output_path), "wb")
-    download_file( "{}/dataset.2.bt2".format(main_url), "{}/data/gg13/dataset.2.bt2".format(args.output_path), "wb")
-    download_file( "{}/dataset.3.bt2".format(main_url), "{}/data/gg13/dataset.3.bt2".format(args.output_path), "wb")
-    download_file( "{}/dataset.4.bt2".format(main_url), "{}/data/gg13/dataset.4.bt2".format(args.output_path), "wb")
-    download_file( "{}/dataset.len".format(main_url), "{}/data/gg13/dataset.len".format(args.output_path), "w")
-    download_file( "{}/dataset.rev.1.bt2".format(main_url), "{}/data/gg13/dataset.rev.1.bt2".format(args.output_path), "wb")
-    download_file( "{}/dataset.rev.2.bt2".format(main_url), "{}/data/gg13/dataset.rev.2.bt2".format(args.output_path), "wb")
+    os.system('mv {path}/deeparg/* {path}'.format(path=args.output_path))
 
 def short_reads_pipeline(args):
     main_srp(args)
@@ -146,9 +121,9 @@ def main():
 
     # Download section
     download = subparsers.add_parser(
-        "download_data", help="Download the data and models used in deepARG")
+        "download_data", help="Download deeparg data")
     download.add_argument('-o', '--output_path', required=False,
-                          help='Output Directory where to store the downloaded data [Default: deepARG instalation directory]')
+                          help='output directory where to download data [Default: deepARG instalation directory]')
     download.set_defaults(func=download_data)
 
     # Short reads pipeline section

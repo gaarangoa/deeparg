@@ -2,6 +2,8 @@
 # DeepARG
 A deep learning based approach to predict Antibiotic Resistance Genes (ARGs) from metagenomes. It provides two models,deepARG-SS and deepARG-LS.
 
+<!-- https://zenodo.org/records/8280582/files/deeparg.zip?download=1 -->
+
 ## Latest Release 
 * updated on Nov 10 - 2023
 * deeparg 1.0.2: Added to pip
@@ -31,16 +33,17 @@ The output format for both files consists of the following fields:
 # Installation
 DeepARG is under Python 2.7, therefore, it is recommended to run it via virtual environment or via docker.  
 
-It is recomended to install conda https://docs.conda.io/en/latest/miniconda.html
+## Instal via miniconda
+Install miniconda https://docs.conda.io/en/latest/miniconda.html
 
-## Dependencies
+<!-- ## Dependencies
 DeepARG requires the next software installed:
 
     1 diamond version 0.9.24 (http://www.diamondsearch.org/index.php?pages/installation/)
-    2 Python version 2.7.14 - 2.7.18
+    2 Python version 2.7.14 - 2.7.18 -->
 
-## Installation
-### Install using virtualenv
+<!-- ## Installation -->
+<!-- ### Install using virtualenv
 (optional) if not pip is installed in yor machine:
 
     1. wget https://bootstrap.pypa.io/get-pip.py
@@ -48,19 +51,21 @@ DeepARG requires the next software installed:
 
 Create a virutal environment with virtualenv
 
-    1. virtualenv env
-    2. source env/bin/activate
+    pip3 install virtualenv
+    python3 -m virtualenv env
+    source env/bin/activate
 
 Install deeparg with pip and download the data required by deeparg
 
-    1. pip install deeparg==1.0.2
-    2. deeparg download_data -o /path/to/local/directory/
+    pip install deeparg==1.0.2
+    Download data from zenodo manually following this link: https://zenodo.org/records/8280582/files/deeparg.zip?download=1 and save it to your local directory
+    3. Run deeparg initiate_environment -i /path/to/local/directory/deeparg/
 
 To re-activate the virtual environment:
 
-    source env/bin/activate
+    source env/bin/activate -->
     
-### Install using conda environment
+### Use conda environment
 Create a virtual environment with conda:
 
     1. conda create -n deeparg_env python=2.7.18
@@ -72,7 +77,7 @@ Install diamond with conda (inside virtual environment):
 
 Install deeparg with pip and download the data required by deeparg
 
-    1. pip install deeparg==1.0.2
+    1. pip install git+https://github.com/gaarangoa/deeparg.git
     2. deeparg download_data -o /path/to/local/directory/
 
 Activate virtual environment
