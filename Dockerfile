@@ -18,6 +18,6 @@ RUN yes | conda install -c bioconda diamond==0.9.24
 RUN yes | conda install -c bioconda trimmomatic
 RUN yes | conda install -c bioconda vsearch
 RUN yes | conda install -c bioconda bedtools
-RUN yes | conda install -c bioconda bowtie2
+RUN yes | conda install -c bioconda bowtie2=
 RUN yes | conda install -c bioconda samtools
 

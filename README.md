@@ -79,9 +79,9 @@ Optional (used for short reads pipeline):
 
     conda install -c bioconda trimmomatic
     conda install -c bioconda vsearch
-    conda install -c bioconda bedtools
-    conda install -c bioconda bowtie2
-    conda install -c bioconda samtools
+    conda install -c bioconda bedtools==2.29.2
+    conda install -c bioconda bowtie2==2.3.5.1
+    conda install -c bioconda samtools==1.9
 
 Install deeparg with pip and download the data required by deeparg
 

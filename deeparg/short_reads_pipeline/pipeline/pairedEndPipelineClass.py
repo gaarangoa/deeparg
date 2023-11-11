@@ -37,7 +37,7 @@ class PairedEnd():
             return 0
 
         print('\n\n\nStep 5: Normalize to 16S rRNAs - this may take a while ...')
-        if not d16sPipe.run(self.sample_name+'.clean', ggdata="{}/data/gg13/dataset".format(self.data['deep_arg_parameters']['data_path'], )):
+        if not d16sPipe.run(self.sample_name+'.clean', ggdata="{}/gg13/dataset".format(self.data['deep_arg_parameters']['data_path'], )):
             return 0
 
         norm.normalize(
