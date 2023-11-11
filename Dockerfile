@@ -9,15 +9,12 @@ RUN apt-get --yes install samtools
 RUN apt-get --yes install wget 
 
 # Install DeepARG 1.0.2
-RUN pip install deeparg==1.0.2
+RUN pip install git+https://github.com/gaarangoa/deeparg.git
 
-# Download data (drepecated)
-# RUN deeparg download_data -o ~/deeparg/
+# Download data
+RUN deeparg download_data -o ~/deeparg/
 
-# Move diamond 
-RUN cp ~/deeparg/bin/diamond /bin/diamond
-RUN chmod +x /bin/diamond
-
+RUN yes | conda install -c bioconda diamond==0.9.24
 RUN yes | conda install -c bioconda trimmomatic
 RUN yes | conda install -c bioconda vsearch
 RUN yes | conda install -c bioconda bedtools
