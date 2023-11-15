@@ -14,7 +14,7 @@ setup(
         'joblib==0.13.0',
         'BioPython==1.73',
         'ete3',
-        'tqdm',
+        'tqdm==4.64.1',
         'nolearn==0.6',
         'lasagne==0.1',
         'scikit-learn==0.19.1',
