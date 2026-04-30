@@ -1,21 +1,214 @@
 
 # DeepARG
-A deep learning based approach to predict Antibiotic Resistance Genes (ARGs) from metagenomes. It provides two models,deepARG-SS and deepARG-LS.
 
-<!-- https://zenodo.org/records/8280582/files/deeparg.zip?download=1 -->
+DeepARG predicts Antibiotic Resistance Genes (ARGs) from metagenomic sequences.
+This repository now includes a modern PyTorch/Transformers runtime for the
+original deepARG-SS and deepARG-LS models.
 
-## Latest Release 
-* updated on Nov 10 - 2023
-* deeparg 1.0.2: Added to pip
-* Fastq input - short reads pipeline fixed
+The default runtime uses the Hugging Face model bundle:
 
-<!-- ## Web Service
-We have released a web service to process raw sequences (paired end) using deepARG. You will get absolute and relative abundances of each submitted sample. You can find the website at http://bench.cs.vt.edu/deeparg -->
+    gaarangoa/deeparg
 
-#### DeepARG output
-DeepARG generates two files: *.ARG that contains the sequences with a probability >= --prob (0.8 default) and *.potential.ARG with sequences containing a probability < --prob (0.8 default). The *.potential.ARG file can still contain ARG-like sequences, howevere, it is necessary inspect its sequences.
+That bundle contains:
 
-The output format for both files consists of the following fields:
+    * deepARG-SS weights and config
+    * deepARG-LS weights and config
+    * DeepARG v2 DIAMOND databases
+    * DIAMOND 2.1.24 binaries for Linux x86_64 and Linux aarch64
+    * Greengenes gg13 Bowtie2 index for optional 16S normalization
+    * source files for the modern pipeline
+
+## Quick Start
+
+Install `uv` if needed:
+
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+
+Create and sync the environment from this repository:
+
+    uv sync
+    source .venv/bin/activate
+
+Run DeepARG with minimal parameters:
+
+    deeparg predict \
+        --model LS \
+        -i ./test/ORFs.fa \
+        -o ./test/X
+
+For short reads use `SS`:
+
+    deeparg predict \
+        --model SS \
+        -i ./test/ORFs.fa \
+        -o ./test/X
+
+Run the modern short reads pipeline on an already-clean FASTA:
+
+    deeparg short_reads_pipeline \
+        --input-fasta ./test/ORFs.fa \
+        --output-file ./test/reads
+
+The first run downloads the model, database, and matching DIAMOND binary from
+Hugging Face into the local Hugging Face cache.
+
+## Python API
+
+    import deeparg
+
+    outputs = deeparg.predict(
+        input_file="./test/ORFs.fa",
+        output_file="./test/X",
+        model="LS",
+    )
+
+    print(outputs["arg"])
+    print(outputs["potential_arg"])
+
+The returned paths are:
+
+    * `<output>.mapping.ARG`
+    * `<output>.mapping.potential.ARG`
+    * `<output>.align.daa.tsv`
+
+Short reads pipeline API:
+
+    result = deeparg.short_reads_pipeline(
+        input_fasta="./test/ORFs.fa",
+        output_file="./test/reads",
+    )
+
+    print(result.arg_quant_file)
+
+## What Gets Downloaded
+
+By default, the modern pipeline loads everything from Hugging Face:
+
+    * model repo: `gaarangoa/deeparg`
+    * model subfolder: `LS` or `SS`, selected from `--model`
+    * database: `<LS|SS>/database/features.dmnd`
+    * gene lengths: `<LS|SS>/database/features.gene.length` when needed
+    * 16S normalization index: `gg13/dataset.*`
+    * DIAMOND binary:
+        * `bin/linux-x86_64/diamond`
+        * `bin/linux-aarch64/diamond`
+
+DIAMOND resolution order:
+
+    1. `--diamond-path`
+    2. `diamond` on `PATH`
+    3. `<data-path>/bin/diamond`
+    4. bundled DIAMOND from `gaarangoa/deeparg`
+
+If you already have a native DIAMOND installed, DeepARG will use it. Otherwise,
+on Linux x86_64 or Linux aarch64, DeepARG downloads and uses the bundled binary.
+
+## Common Commands
+
+Use nucleotide input:
+
+    deeparg predict \
+        --model LS \
+        --type nucl \
+        -i input.fasta \
+        -o output/sample
+
+Use protein input:
+
+    deeparg predict \
+        --model LS \
+        --type prot \
+        -i proteins.faa \
+        -o output/sample
+
+Use a specific DIAMOND binary:
+
+    deeparg predict \
+        --model LS \
+        -i input.fasta \
+        -o output/sample \
+        --diamond-path /path/to/diamond
+
+Use a local DeepARG data directory instead of the HF database:
+
+    deeparg predict \
+        --model LS \
+        -i input.fasta \
+        -o output/sample \
+        --data-path /path/to/deeparg-data
+
+Use another Hugging Face repo or local `save_pretrained` folder:
+
+    deeparg predict \
+        --model LS \
+        -i input.fasta \
+        -o output/sample \
+        --hf-model-path USER_OR_ORG/deeparg
+
+Force CPU:
+
+    deeparg predict \
+        --model LS \
+        -i input.fasta \
+        -o output/sample \
+        --hf-device cpu
+
+## Short Reads Pipeline
+
+The modern short reads pipeline keeps the legacy workflow but runs DeepARG
+through the PyTorch/Transformers API:
+
+    1. optional paired-end trimming with Trimmomatic
+    2. optional paired-end merge with vsearch
+    3. DeepARG-SS prediction
+    4. ARG interval merge and quantification in Python
+    5. optional 16S normalization with Bowtie2 and samtools
+
+Minimal run from an already-clean FASTA:
+
+    deeparg short_reads_pipeline \
+        --input-fasta input.clean.fasta \
+        --output-file output/sample
+
+Run from paired FASTQ files:
+
+    deeparg short_reads_pipeline \
+        --forward-pe-file sample_R1.fastq.gz \
+        --reverse-pe-file sample_R2.fastq.gz \
+        --output-file output/sample
+
+Enable 16S normalization. The `gg13` Bowtie2 index is downloaded from
+`gaarangoa/deeparg` automatically:
+
+    deeparg short_reads_pipeline \
+        --input-fasta input.clean.fasta \
+        --output-file output/sample \
+        --normalize-16s
+
+Raw paired FASTQ mode requires `trimmomatic` and `vsearch` on `PATH`.
+`--normalize-16s` additionally requires `bowtie2` and `samtools` on `PATH`.
+The model, ARG database, DIAMOND binaries, and `gg13` index are all in the HF
+bundle.
+
+If Python HTTP clients hang while `curl` can reach Hugging Face, force IPv4:
+
+    HF_FORCE_IPV4=1 deeparg predict \
+        --model LS \
+        -i input.fasta \
+        -o output/sample
+
+## Output
+
+DeepARG writes two main files:
+
+    * `*.ARG`
+    * `*.potential.ARG`
+
+`*.ARG` contains predictions with probability greater than or equal to
+`--min-prob`, which defaults to `0.8`. `*.potential.ARG` contains lower
+probability ARG-like predictions.
+
+Columns:
 
     * ARG_NAME
     * QUERY_START
@@ -30,208 +223,87 @@ The output format for both files consists of the following fields:
     * ALIGNMENT_BESTHIT_EVALUE
     * COUNTS
 
-# Installation
-DeepARG is under Python 2.7, therefore, it is recommended to run it via virtual environment or via docker.  
+## Development With uv
 
-## Instal via miniconda
-Install miniconda https://docs.conda.io/en/latest/miniconda.html
+Create or refresh the environment:
 
-<!-- ## Dependencies
-DeepARG requires the next software installed:
+    uv sync
 
-    1 diamond version 0.9.24 (http://www.diamondsearch.org/index.php?pages/installation/)
-    2 Python version 2.7.14 - 2.7.18 -->
+Update dependency resolution:
 
-<!-- ## Installation -->
-<!-- ### Install using virtualenv
-(optional) if not pip is installed in yor machine:
+    uv lock --upgrade
+    uv sync
 
-    1. wget https://bootstrap.pypa.io/get-pip.py
-    2. python get-pip.py
+Run the CLI from the environment:
 
-Create a virutal environment with virtualenv
+    .venv/bin/deeparg predict --help
 
-    pip3 install virtualenv
-    python3 -m virtualenv env
-    source env/bin/activate
+Run a quick local test:
 
-Install deeparg with pip and download the data required by deeparg
-
-    pip install deeparg==1.0.2
-    Download data from zenodo manually following this link: https://zenodo.org/records/8280582/files/deeparg.zip?download=1 and save it to your local directory
-    3. Run deeparg initiate_environment -i /path/to/local/directory/deeparg/
-
-To re-activate the virtual environment:
-
-    source env/bin/activate -->
-    
-### Use conda environment
-Create a virtual environment with conda:
-
-    conda create -n deeparg_env python=2.7.18
-    source activate deeparg_env
-
-Install diamond with conda (inside virtual environment): 
-
-    conda install -c bioconda diamond==0.9.24
-
-Optional (used for short reads pipeline): 
-
-    conda install -c bioconda trimmomatic
-    conda install -c bioconda vsearch
-    conda install -c bioconda bedtools==2.29.2
-    conda install -c bioconda bowtie2==2.3.5.1
-    conda install -c bioconda samtools
-
-Install deeparg with pip and download the data required by deeparg
-
-    pip install git+https://github.com/gaarangoa/deeparg.git
-    deeparg download_data -o /path/to/local/directory/
-
-Activate virtual environment
-
-    conda activate deeparg_env
-
-Deactivate the virtual environment:
-
-    conda deactivate
-
-<!-- ### Known instalation issues
-See issues on repository
-
-### Docker
-
-    docker pull gaarangoa/deeparg:latest
-
-To run deeparg using docker just type:
-
-    docker run --rm -v $PWD:/data/ gaarangoa/deeparg:latest deeparg --help
-
-Note that input parameters are under /data/ directory.  -->
-
-### Example:
-In this example, we will classify a set of ORFs from a set of assembled contigs. The fasta file contains gene sequences (nucleotides).
-
-    deeparg predict \
+    HF_FORCE_IPV4=1 .venv/bin/deeparg predict \
         --model LS \
         -i ./test/ORFs.fa \
-        -o ./test/X \
-        -d /path/to/data/ \
-        --type nucl \
-        --min-prob 0.8 \
-        --arg-alignment-identity 30 \
-        --arg-alignment-evalue 1e-10 \
-        --arg-num-alignments-per-entry 1000
+        -o ./data/test_hf_real \
+        --hf-device cpu
 
-### Usage
+The project is configured by:
 
-    usage: deeparg predict 
-        -h, --help            show this help message and exit
-        --model MODEL         Select model to use (short sequences for reads | long
-                                sequences for genes) SS|LS [No default]
-        -i INPUT_FILE, --input-file INPUT_FILE
-                                Input file (Fasta input file)
-        -o OUTPUT_FILE, --output-file OUTPUT_FILE
-                                Output file where to store results
-        -d DATA_PATH, --data-path DATA_PATH
-                                Path where data was downloaded [see deeparg download-
-                                data --help for details]
-        --type TYPE           Molecular data type prot/nucl [Default: nucl]
-        --min-prob MIN_PROB   Minimum probability cutoff [Default: 0.8]
-        --arg-alignment-identity ARG_ALIGNMENT_IDENTITY
-                                Identity cutoff for sequence alignment [Default: 50]
-        --arg-alignment-evalue ARG_ALIGNMENT_EVALUE
-                                Evalue cutoff [Default: 1e-10]
-        --arg-alignment-overlap ARG_ALIGNMENT_OVERLAP
-                                Alignment read overlap [Default: 0.8]
-        --arg-num-alignments-per-entry ARG_NUM_ALIGNMENTS_PER_ENTRY
-                                Diamond, minimum number of alignments per entry
-                                [Default: 1000]
-        --model-version MODEL_VERSION
-                                Model deepARG version [Default: v2]
+    * `pyproject.toml`
+    * `uv.lock`
 
-### Usage examples:
+## Training and Conversion
 
-Go to the deeparg-ss directory and run any of the following commands:
+Train a new Transformers model from a DIAMOND/BLAST TSV:
 
-Input is a FASTA file:
+    python -m deeparg.modern.train_transformers \
+        --train-alignments /path/to/train_reads.tsv \
+        --output-dir /path/to/deeparg-ss-transformers \
+        --pipeline reads \
+        --identity 30 \
+        --evalue 1 \
+        --coverage 25
 
-    1) Annotate gene-like sequences when the input is a nucleotide FASTA file:
-        deeparg predict --model LS --type nucl --input /path/file.fasta --out /path/to/out/file.out
+Convert existing DeepARG Lasagne weights:
 
-    2) Annotate gene-like sequences when the input is an amino acid FASTA file:
-        deeparg predict --model LS --type prot --input /path/file.fasta --out /path/to/out/file.out
+    python -m deeparg.modern.export_legacy \
+        --metadata-pkl /path/to/model/v2/metadata_SS.pkl \
+        --model-pkl /path/to/model/v2/model_SS.pkl \
+        --database-dir /path/to/database/v2 \
+        --feature-lengths /path/to/database/v2/features.gene.length \
+        --output-dir /path/to/deeparg-ss-transformers
 
-    3) Annotate short sequence reads when the input is a nucleotide FASTA file:
-        deeparg predict --model SS --type nucl --input /path/file.fasta --out /path/to/out/file.out
+Upload a bundle to Hugging Face:
 
-    3) Annotate short sequence reads when the input is a protein FASTA file (unusual case):
-        deeparg predict --model SS --type prot --input /path/file.fasta --out /path/to/out/file.out
+    HF_FORCE_IPV4=1 python -m deeparg.modern.upload_hf \
+        --repo-id USER_OR_ORG/deeparg \
+        --folder /path/to/deeparg-transformers
 
-# Short reads pipeline
+## Legacy Runtime
 
-## Usage
+The original DeepARG runtime was based on Python 2.7, Theano, Lasagne, and
+nolearn. It is deprecated in this repository; the active codebase now contains
+only the PyTorch/Transformers runtime described above.
 
-    deeparg short_reads_pipeline [-h] --forward_pe_file FORWARD_PE_FILE
-                                        --reverse_pe_file REVERSE_PE_FILE
-                                        --output_file OUTPUT_FILE
-                                        [-d DEEPARG_DATA_PATH]
-                                        [--deeparg_identity DEEPARG_IDENTITY]
-                                        [--deeparg_probability DEEPARG_PROBABILITY]
-                                        [--deeparg_evalue DEEPARG_EVALUE]
-                                        [--gene_coverage GENE_COVERAGE]
-                                        [--bowtie_16s_identity BOWTIE_16S_IDENTITY]
+Legacy installation and usage notes were moved to:
 
-    optional arguments:
-    -h, --help            show this help message and exit
-    --forward_pe_file FORWARD_PE_FILE
-                            forward mate from paired end library
-    --reverse_pe_file REVERSE_PE_FILE
-                            reverse mate from paired end library
-    --output_file OUTPUT_FILE
-                            save results to this file prefix
-    -d DEEPARG_DATA_PATH, --deeparg_data_path DEEPARG_DATA_PATH
-                            Path where data was downloaded [see deeparg download-
-                            data --help for details]
-    --deeparg_identity DEEPARG_IDENTITY
-                            minimum identity for ARG alignments [default 80]
-    --deeparg_probability DEEPARG_PROBABILITY
-                            minimum probability for considering a reads as ARG-
-                            like [default 0.8]
-    --deeparg_evalue DEEPARG_EVALUE
-                            minimum e-value for ARG alignments [default 1e-10]
-    --gene_coverage GENE_COVERAGE
-                            minimum coverage required for considering a full gene
-                            in percentage. This parameter looks at the full gene
-                            and all hits that align to the gene. If the overlap of
-                            all hits is below the threshold the gene is discarded.
-                            Use with caution [default 1]
+    README_LEGACY.md
 
-### Example
+## Citation
 
-    deeparg short_reads_pipeline \
-        --forward_pe_file ./test/F.fq.gz \
-        --reverse_pe_file ./test/R.fq.gz \
-        --output_file ./test/reads \
-        -d ~/Desktop/darg \
-        --bowtie_16s_identity 100
+If you use DeepARG in published research, please cite:
 
+Arango-Argoty GA, Garner E, Pruden A, Heath LS, Vikesland P, Zhang L.
+DeepARG: A deep learning approach for predicting antibiotic resistance genes
+from metagenomic data. Microbiome 2018 6:23.
 
-## About
-If you use deepARG in published research, please cite:
-
-Arango-Argoty GA, Garner E, Pruden A, Heath LS, Vikesland P, Zhang L. DeepARG: A deep learning approach for predicting antibiotic resistance genes from metagenomic data. Microbiome20186:23
-https://doi.org/10.1186/s40168-018-0401-z.
-
-## Database
-Database is hosted in Zenodo: https://zenodo.org/records/8280582
+https://doi.org/10.1186/s40168-018-0401-z
 
 ## License
-deepARG is under the MIT licence. However, please take a look at te comercial restrictions of the databases used during the mining process (CARD, ARDB, and UniProt).
+
+DeepARG is under the MIT license. Please also review the commercial restrictions
+of the databases used during the mining process, including CARD, ARDB, and
+UniProt.
 
 ## Contact
-If need any asistance please contact: gustavo1@vt.edu
 
-<!-- ## Update pip
-python setup.py sdist bdist_wheel
-twine upload dist/* -->
+gustavo1@vt.edu

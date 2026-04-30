@@ -1,23 +1,22 @@
-FROM conda/miniconda2
+FROM python:3.12-slim
 
-# install dependencies
-RUN apt update
-RUN apt-get --yes install default-jre
-RUN apt-get --yes install bedtools
-RUN apt-get --yes install bowtie2
-RUN apt-get --yes install samtools
-RUN apt-get --yes install wget 
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV UV_LINK_MODE=copy
 
-# Install DeepARG 1.0.2
-RUN pip install git+https://github.com/gaarangoa/deeparg.git
+WORKDIR /app
 
-# Download data
-RUN deeparg download_data -o ~/deeparg/
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN yes | conda install -c bioconda diamond==0.9.24
-RUN yes | conda install -c bioconda trimmomatic
-RUN yes | conda install -c bioconda vsearch
-RUN yes | conda install -c bioconda bedtools
-RUN yes | conda install -c bioconda bowtie2=
-RUN yes | conda install -c bioconda samtools
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:${PATH}"
 
+COPY pyproject.toml uv.lock README.md LICENSE ./
+COPY deeparg ./deeparg
+
+RUN uv sync --frozen
+
+ENTRYPOINT ["uv", "run", "deeparg"]
+CMD ["predict", "--help"]

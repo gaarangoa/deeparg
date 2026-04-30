@@ -1,0 +1,47 @@
+{
+  "input_fasta": "test/ORFs.fa",
+  "alignment_tsv": "data/test_hf_real.align.daa.tsv",
+  "model": "LS v2",
+  "legacy_metadata": "data/zenodo/extracted/deeparg/model/v2/metadata_LS.pkl",
+  "legacy_weights": "data/zenodo/extracted/deeparg/model/v2/model_LS.pkl",
+  "modern_model": "data/hf/deeparg-v2/LS",
+  "samples_after_filters": 141,
+  "alignment_rows_raw": 2174,
+  "features": 12279,
+  "labels": 32,
+  "legacy_prediction_rows": 169,
+  "modern_prediction_rows": 169,
+  "probability_max_abs_diff": 1.1622905731201172e-06,
+  "probability_mean_abs_diff": 7.466554485802135e-09,
+  "top_label_mismatches": 0,
+  "prediction_row_mismatches_tolerance_1e_5": 0,
+  "outputs": {
+    ".ARG": {
+      "legacy_lines": 115,
+      "modern_lines": 115,
+      "byte_identical": false
+    },
+    ".potential.ARG": {
+      "legacy_lines": 56,
+      "modern_lines": 56,
+      "byte_identical": false
+    }
+  },
+  "semantic_output_comparison": {
+    ".ARG": {
+      "line_count_match": true,
+      "non_probability_mismatches": 0,
+      "max_probability_diff": 2.384185791015625e-07,
+      "mean_probability_diff": 5.333047164113898e-08,
+      "probabilities_within_1e_5": true
+    },
+    ".potential.ARG": {
+      "line_count_match": true,
+      "non_probability_mismatches": 0,
+      "max_probability_diff": 1.1622905731201172e-06,
+      "mean_probability_diff": 2.657825296575373e-07,
+      "probabilities_within_1e_5": true
+    }
+  },
+  "semantic_status": "PASS"
+}
